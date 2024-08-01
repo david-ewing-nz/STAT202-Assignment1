@@ -1,0 +1,107 @@
+---
+title: "STAT202 Assignment 1"
+author: "David Ewing"
+date: "2024-07-31"
+format: docx
+---
+
+```{r setup, include=TRUE}
+# 0. conditionally install (synchronise between home and uni laptops)
+
+if (!requireNamespace("tidyverse", quietly = TRUE)) {
+  install.packages("tidyverse")
+}
+if (!requireNamespace("conflicted", quietly = TRUE)) {
+  install.packages("conflicted")
+}
+```
+
+
+# 0.1  Load lib (and address conflicts)
+```{r}
+library(tidyverse)
+library(conflicted) 
+conflicted::conflict_prefer("filter", "dplyr")
+conflicted::conflict_prefer("lag", "dplyr")
+```
+## 1. Load dataset
+```{r}
+data(starwars)
+df <- starwars
+View(starwars)
+```
+
+## 2. Create  scatter plot
+```{r}
+
+ggplot(df, aes(x = height, y = mass)) +
+  geom_point() +
+  labs(title = "Scatter plot -  Mass vs. Height", 
+       x = "Height (cm)", y = "Mass (kg)")
+```
+# Assessment:  WEAK and positive . if the outlyer was removed then I would suggest stronger and positive
+
+
+## 3. missing data
+```{r}
+na_rows   <- starwars %>% filter(if_any(everything(), is.na))
+na_graph  <- starwars %>% filter(is.na(mass) | is.na(height))
+starwars |> select (mass,height) |> summary()
+```
+## 4. drop missing data rows
+```{r}
+star_no <- starwars |> drop_na(mass, height) #drop na
+star_no <- star_no  |> filter (mass <= 250)
+star_no |> select (mass,height) |> summary()
+```
+## 5. Student_ID as value
+```{r}
+Student_ID = 82171165
+set.seed(Student_ID)
+my_starno <-star_no |> sample_n(50) 
+#my_starno |> summary()
+```
+## 6. scatter plot of filtered data
+```{r}
+ggplot(my_starno, aes(x = height, y = mass)) +
+  geom_point() +
+  labs(title = "Scatter plot -  Mass vs. Height (filtered)", 
+       x = "Height (cm)", y = "Mass (kg)")
+
+```
+# Assessment:  MODERATE and positive 
+
+## 7. linear regression model
+```{r}
+model_1 <- lm(mass ~ height, data = my_starno)
+print(summary(model_1))
+coefficients <- summary(model_1)$coefficients
+```
+# The intercept is where the height is zero and is useless on its own but is  required to maintain the slope of the line to properly fit a curve relative to the observed data points. 
+# The slope shows how the mass of a character is expected to increase for every centimetre of highght increase as per the group of observed data points. 
+
+````
+
+# 8. centre the height 
+```{r}
+
+mystar_no <- my_starno %>% mutate(cent_height = height - mean(height, na.rm = TRUE))
+model_2 <- lm(mass ~ cent_height, data = mystar_no)
+summary(model_2)
+coefficients_2 <- summary(model_2)$coefficients
+```
+
+
+# Differences:
+# Primary difference is the intercept.
+# r, r-squared and adjusted r-square # remains the same. Indicating to me that the slope is the same and that the data shifted and this shift is primarily indicated in the intercept. 
+
+# 9. scatter plot of mystar_no data
+```{r}
+ggplot(mystar_no, aes(x = height, y = mass)) +
+  geom_point() +
+  labs(title = "Scatter plot -  Mass vs. Height (mystar_no)", 
+       x = "Height (cm)", y = "Mass (kg)")
+
+```
+
